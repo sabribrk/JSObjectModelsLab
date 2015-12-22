@@ -15,24 +15,93 @@
 
     // TODO: Vérifier que la création d'objets SpeedCheck est Possible
 
+    test('Création d\'objets SpeedCheck', function() {
+        expect(3);
+        ok(typeof window.createSpeedCheck() != 'null', 'Création d\'objets SpeedCheck');
+        ok(typeof window.createSpeedCheckFR() != 'null', 'Création d\'objets SpeedCheck');
+        ok(typeof window.createSpeedCheckBE() != 'null', 'Création d\'objets SpeedCheck');
+    });
+
+
 
     // TODO: Vérifier que les objets créés directement avec creatSpeedCheck ne sont pas utilisables :
     // speed0 = creatSpeedCheck();
     // speed0.speed = 42; // SHOULD throw a SpeedCheckError.
     // speed0.licencePlate = '3-DFE-456'; // SOULD throw a SpeedCheckError.
+    test('objets crées avec SpeedCheck sont non utilisables', function() {
+
+        expect(2);
+        var speed0 = createSpeedCheck();
+        throws(function() {speed0.speed = 42}, 'SHOULD throw a SpeedCheckError');
+        throws(function() {speed0.licencePlate = '3-DFE-456'}, 'SHOULD throw a SpeedCheckError');
+    });
+
 
 
     // TODO: Vérifier que TOUTES les fonctionnalités de createSpeedCheckFR sont correctes (effects de bords, valeurs négatives, etc.) pour tous les attributs (speed et licencePlate)
+    test('vérifier les fonctionnalités de createSpeedCheckFR', function() {
+
+        expect(8);
+        var speed0 = createSpeedCheckFR();
+        equal(speed0.speed, 0, 'vitesse initiale');
+        speed0.speed = 50;
+        equal(speed0.speed, 50, 'vitesse modifier');
+        throws(function() {speed0.speed = -30}, 'valeur négative');
+        speed0.speed = 130;
+        equal(speed0.infraction, false, 'pas d\'infraction');
+        speed0.speed = 131;
+        equal(speed0.infraction, true, 'infraction');
+        equal(speed0.licencePlate,'???', 'plaque');
+        throws(function() {speed0.licencePlate = '3-BMS-777'}, 'fausse plaque');
+        speed0.licencePlate = 'BR172MS';
+        equal(speed0.licencePlate, 'BR172MS', 'plaque valide');
+
+    });
+
+
+
 
     // TODO: Vérifier que TOUTES les fonctionnalités de createSpeedCheckBE sont correctes (effects de bords, valeurs négatives, etc.) pour tous les attributs (speed et licencePlate)
 
+    test('vérifier les fonctionnalités de createSpeedCheckBE', function() {
+
+        expect(8);
+        var speed0 = createSpeedCheckBE();
+        equal(speed0.speed, 0, 'vitesse initiale');
+        speed0.speed = 50;
+        equal(speed0.speed, 50, 'vitesse modifier');
+        throws(function() {speed0.speed = -30}, 'valeur négative');
+        speed0.speed = 120;
+        equal(speed0.infraction, false, 'pas d\'infraction');
+        speed0.speed = 121;
+        equal(speed0.infraction, true, 'infraction');
+        equal(speed0.licencePlate,'???', 'plaque');
+        throws(function() {speed0.licencePlate = '3B7M477'}, 'fausse plaque');
+        speed0.licencePlate = '1-BRK-172';
+        equal(speed0.licencePlate, '1-BRK-172', 'plaque valide');
+
+     });
 
     // TODO: Vérifier que la fonction toString() fonctionne bien.
     //  - chaine de caractère attentue pour une infracion (e.g. licencePlate === 'WD366MD' et  speed === 135):
     //      "Véhicule WD366MD roule à 135 km/h. Infraction!"
     //  - chaine de caractère attendue pour sans infraction (e.g. licencePlate === 'WD366MD' et  speed === 105):
     //      "Véhicule WD366MD roule à 105 km/h. Ça va, circulez..."
-
+    test('Vérifier que la fonction toString() fonctionne', function() {
+        expect(4);
+        var speed0 = createSpeedCheckFR();
+        speed0.speed = 135;
+        speed0.licencePlate = 'WD366MD';
+        equal(speed0.toString(), 'VéhiculeWD366MDroule à135km/h. Infraction!', 'to String ok pour infraction FR');
+        speed0.speed = 105;
+        equal(speed0.toString(), 'VéhiculeWD366MDroule à105km/h. Ça va, circulez...', ' to String ok pour pas d\'infraction FR');
+        var speed0 = createSpeedCheckBE();
+        speed0.speed = 125;
+        speed0.licencePlate = '1-BRK-172';
+        equal(speed0.toString(), 'Véhicule1-BRK-172roule à125km/h. Infraction!', 'to String ok pour infraction BE');
+        speed0.speed = 95;
+        equal(speed0.toString(), 'Véhicule1-BRK-172roule à95km/h. Ça va, circulez...','to string ok pour pas d\'Infraction BE');
+      });
 
 
 
@@ -201,24 +270,64 @@
 
     // TODO Write the whole test module for testing with the app/data/eure.json file.
     var obj;
+    var objets;
+    var autres;
+    var objetShapes = {building:[], road:[], amenity:[], natural:[]};
     module('Asynchronous Unit Test Module', {
         setup: function() {
             stop();
 
-            // You can load a resource before loaching the test...
-            $.get('test.json').success(function(data){
-                obj = data;
-                start();
-            });
 
+            // You can load a resource before loaching the test...
+            $.get("test.json").success(function(data){
+                obj = data;
+            });
             // ... Or any asynchroneous task
             // window.setTimeout(function() {
             //     obj = {a:'OK', b:'KO'};
             //     start();
             // }, 1000);
+           $.get('data/eure.json').success(function(data){
+                objets = data;
+                autres = 0;
+                objetShapes = {building:[], road:[], amenity:[], natural:[]};
+                for (var i = 0; i < objets.length; i++){
+                  if (objets[i].hasOwnProperty("building") && objets[i].building == true){
+                    objetShapes.building.push(window.Shapes.createBuilding(objets[i]));
+                    }
+                    else if (objets[i].hasOwnProperty("highway")){
+                      objetShapes.road.push(window.Shapes.createRoad(objets[i]));
+                    }
+                    else if (objets[i].hasOwnProperty("amenity")){
+                      objetShapes.amenity.push(window.Shapes.createAmenity(objets[i]));
+                    }
+                    else if (objets[i].hasOwnProperty("natural")){
+                      objetShapes.natural.push(window.Shapes.createNatural(objets[i]));
+                    }
+                    else
+                    autres++;
 
-        }
+                  }
+                  start();
+                });
+         }
+      });
+
+    test('nombres d\'objets crées', function(){
+      expect(2);
+      notEqual(objets.length, 0, 'longueur non nulle');
+      var result = objetShapes.building.length + objetShapes.road.length + objetShapes.amenity.length + objetShapes.natural.length + autres;
+      equal(objets.length, result, 'nombres d\'objets');
     });
+
+    test('surfaces', function(){
+      expect(1);
+      var res = objetShapes.building[0].getArea();
+      for (var i = 1; i < objetShapes.building.length; i++){
+       res += objetShapes.building[i].getArea();
+      }
+      notEqual(res, 0, 'surfaces non nulles');
+     });
 
     test('test 1', function() {
         equal(obj.a, 'OK', 'Message');

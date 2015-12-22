@@ -39,6 +39,13 @@
           },
           toString: {
               /* TODO: Implement this function */
+              value : function() {
+               if (this._infraction) {
+                 return 'Véhicule' + this.licencePlate + 'roule à' + this.speed +'km/h. Infraction!';
+               } else {
+                 return 'Véhicule' + this.licencePlate + 'roule à' + this.speed + 'km/h. Ça va, circulez...';
+               }
+              }
           },
           infraction: {
               get: function() {
